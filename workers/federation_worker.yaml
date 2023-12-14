@@ -1,0 +1,17 @@
+worker_app: synapse.app.generic_worker
+worker_name: federation_worker
+worker_replication_secret: "itsasecret"
+log_config: "/etc/matrix-synapse/log.yaml"
+worker_listeners:
+  - type: http
+    port: 8046
+    resources:
+      - names: [replication]
+
+  - type: http
+    port: 8454
+    x_forwarded: true
+    bind_addresses: ['0.0.0.0']
+    resources:
+      - names: [federation]
+        compress: true

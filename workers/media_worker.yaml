@@ -1,0 +1,17 @@
+worker_app: synapse.app.media_repository
+worker_name: media_worker
+worker_replication_secret: "itsasecret"
+log_config: "/etc/matrix-synapse/log.yaml"
+worker_listeners:
+  - type: http
+    port: 8085
+    x_forwarded: true
+    bind_addresses: ['0.0.0.0']
+    resources:
+      - names: [media]
+
+  - type: http
+    port: 8038
+    resources:
+      - names: [replication]
+

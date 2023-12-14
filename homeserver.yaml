@@ -1,0 +1,146 @@
+server_name: yourdomain.co
+serve_server_wellknown: true
+enable_metrics: true
+suppress_key_server_warning: true
+report_stats: false
+pid_file: /var/run/matrix-synapse.pid
+listeners:
+  - port: 8080
+    tls: false
+    type: http
+    x_forwarded: true
+    bind_addresses: ['127.0.0.1']
+    resources:
+      - names: [replication, health]
+
+  - type: http
+    port: 8448
+    x_forwarded: true
+    bind_addresses: ['0.0.0.0']
+    resources:
+      - names: [client]
+        compress: true
+
+  - port: 9000
+    tls: false
+    type: http
+    resources:
+      - names: [metrics]
+    bind_addresses: ['0.0.0.0']
+
+worker_replication_secret: "itsasecret"
+instance_map:
+    main:
+        host: '127.0.0.1'
+        port: 8080
+    event_persister1:
+        host: '127.0.0.1'
+        port: 8034
+    federation_sender1:
+        host: '127.0.0.1'
+        port: 8035
+    generic_worker1:
+        host: '127.0.0.1'
+        port: 8036
+    background_worker:
+        host: '127.0.0.1'
+        port: 8037
+    media_worker:
+        host: '127.0.0.1'
+        port: 8038
+    pusher_worker1:
+        host: '127.0.0.1'
+        port: 8039
+    typing_worker:
+        host: '127.0.0.1'
+        port: 8041
+    to_device_worker:
+        host: '127.0.0.1'
+        port: 8042
+    account_data_worker:
+        host: '127.0.0.1'
+        port: 8043
+    receipts_worker:
+        host: '127.0.0.1'
+        port: 8044
+    presence_worker:
+        host: '127.0.0.1'
+        port: 8045
+    federation_worker:
+        host: '127.0.0.1'
+        port: 8046
+    client_sync_worker:
+        host: '127.0.0.1'
+        port: 8047
+    client_api_worker:
+        host: '127.0.0.1'
+        port: 8048
+    client_encryption_worker:
+        host: '127.0.0.1'
+        port: 8049
+    client_login_worker:
+        host: '127.0.0.1'
+        port: 8050
+    client_sender_worker:
+        host: '127.0.0.1'
+        port: 8051
+    client_pushrules_worker:
+        host: '127.0.0.1'
+        port: 8052
+
+
+
+stream_writers:
+    events: event_persister1
+    typing: typing_worker
+    to_device: to_device_worker
+    account_data: account_data_worker
+    receipts: receipts_worker
+    presence: presence_worker
+
+run_background_tasks_on: background_worker
+notify_appservices_from_worker: federation_sender1
+media_instance_running_background_jobs: "media_worker"
+start_pushers: false
+pusher_instances:
+  - pusher_worker1
+send_federation: false
+outbound_federation_restricted_to:
+  - federation_sender1
+federation_sender_instances:
+  - federation_sender1
+
+enable_media_repo: false
+
+redis:
+    enabled: true
+
+database:
+  name: psycopg2
+  args:
+    user: synapse_user
+    password: 
+    database: synapse
+    host: 10.0.7.2
+    port: 5435
+    cp_min: 5
+    cp_max: 10
+
+log_config: "/etc/matrix-synapse/log.yaml"
+media_store_path: /var/lib/matrix-synapse/media
+signing_key_path: "/etc/matrix-synapse/homeserver.signing.key"
+registration_shared_secret: 
+trusted_key_servers:
+  - server_name: "matrix.org"
+rc_federation:
+  sleep_limit: 100
+  sleep_delay: 100
+  reject_limit: 400
+  concurrent: 20
+turn_uris: [ "turn:yourdomain.co?transport=udp"]
+turn_shared_secret: "!"
+turn_user_lifetime: 86400000
+turn_allow_guests: true
+push:
+  enabled: true
+  include_content: false

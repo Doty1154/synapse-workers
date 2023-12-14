@@ -1,0 +1,9 @@
+worker_app: synapse.app.generic_worker
+worker_name: event_persister1
+log_config: "/etc/matrix-synapse/log.yaml"
+worker_replication_secret: "itsasecret"
+worker_listeners:
+  - type: http
+    port: 8034
+    resources:
+      - names: [replication]

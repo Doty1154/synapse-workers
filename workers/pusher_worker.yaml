@@ -1,0 +1,10 @@
+worker_app: synapse.app.generic_worker
+worker_name: pusher_worker1
+worker_replication_secret: "itsasecret"
+log_config: "/etc/matrix-synapse/log.yaml"
+worker_listeners:
+  - type: http
+    port: 8039
+    resources:
+      - names: [replication]
+

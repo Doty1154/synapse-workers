@@ -1,0 +1,200 @@
+matrix.yourdomain.local {
+	tls /etc/letsencrypt/live/matrix.yourdomain.local/fullchain.pem /etc/letsencrypt/live/matrix.yourdomain.local/privkey.pem
+	encode zstd gzip
+	header /.well-known/matrix/* Content-Type application/json
+	header /.well-known/matrix/* Access-Control-Allow-Origin *
+	respond /.well-known/matrix/server `{"m.server": "matrix.yourdomain.local:443"}`
+	respond /.well-known/matrix/client `{"m.server": {"base_url": "https://matrix.yourdomain.local"},"m.homeserver": {"base_url": "https://matrix.yourdomain.local"},"org.matrix.msc3575.proxy": {"url": "https://matrix-slide.matrix.yourdomain.local"}}`
+	#Typing 
+	@typing_worker path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/typing
+	reverse_proxy @typing_worker http://matrix.yourdomain.local:8449
+
+	#Send to Device
+	@to_device_worker path_regexp ^/_matrix/client/(r0|v3|unstable)/sendToDevice/
+	reverse_proxy @to_device_worker http://matrix.yourdomain.local:8450
+
+	#Account Data
+	@account_data_worker1 path_regexp ^/_matrix/client/(r0|v3|unstable)/.*/tags
+	@account_data_worker2 path_regexp ^/_matrix/client/(r0|v3|unstable)/.*/account_data
+	reverse_proxy @account_data_worker1 http://matrix.yourdomain.local:8451
+	reverse_proxy @account_data_worker2 http://matrix.yourdomain.local:8451
+
+	#Receipts
+	@receipts_worker1 path_regexp ^/_matrix/client/(r0|v3|unstable)/rooms/.*/receipt
+	reverse_proxy @receipts_worker1 http://matrix.yourdomain.local:8452
+	@receipts_worker2 path_regexp ^/_matrix/client/(r0|v3|unstable)/rooms/.*/read_markers
+	reverse_proxy @receipts_worker2 http://matrix.yourdomain.local:8452
+
+	#Presence 
+	@presence_worker path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/presence/
+	reverse_proxy @presence_worker http://matrix.yourdomain.local:8453
+
+	# Federation requests
+	@federation_worker1 path_regexp ^/_matrix/federation/v1/event/
+	reverse_proxy @federation_worker1 http://matrix.yourdomain.local:8454
+	@federation_worker2 path_regexp ^/_matrix/federation/v1/state/
+	reverse_proxy @federation_worker2 http://matrix.yourdomain.local:8454
+	@federation_worker3 path_regexp ^/_matrix/federation/v1/state_ids/
+	reverse_proxy @federation_worker3 http://matrix.yourdomain.local:8454
+	@federation_worker4 path_regexp ^/_matrix/federation/v1/backfill/
+	reverse_proxy @federation_worker4 http://matrix.yourdomain.local:8454
+	@federation_worker5 path_regexp ^/_matrix/federation/v1/get_missing_events/
+	reverse_proxy @federation_worker5 http://matrix.yourdomain.local:8454
+	@federation_worker6 path_regexp ^/_matrix/federation/v1/publicRooms
+	reverse_proxy @federation_worker6 http://matrix.yourdomain.local:8454
+	@federation_worker7 path_regexp ^/_matrix/federation/v1/query/
+	reverse_proxy @federation_worker7 http://matrix.yourdomain.local:8454
+	@federation_worker8 path_regexp ^/_matrix/federation/v1/make_join/
+	reverse_proxy @federation_worker8 http://matrix.yourdomain.local:8454
+	@federation_worker9 path_regexp ^/_matrix/federation/v1/make_leave/
+	reverse_proxy @federation_worker9 http://matrix.yourdomain.local:8454
+	@federation_worker10 path_regexp ^/_matrix/federation/(v1|v2)/send_join/
+	reverse_proxy @federation_worker10 http://matrix.yourdomain.local:8454
+	@federation_worker11 path_regexp ^/_matrix/federation/(v1|v2)/send_leave/
+	reverse_proxy @federation_worker11 http://matrix.yourdomain.local:8454
+	@federation_worker12 path_regexp ^/_matrix/federation/(v1|v2)/invite/
+	reverse_proxy @federation_worker12 http://matrix.yourdomain.local:8454
+	@federation_worker13 path_regexp ^/_matrix/federation/v1/event_auth/
+	reverse_proxy @federation_worker13 http://matrix.yourdomain.local:8454
+	@federation_worker14 path_regexp ^/_matrix/federation/v1/timestamp_to_event/
+	reverse_proxy @federation_worker14 http://matrix.yourdomain.local:8454
+	@federation_worker15 path_regexp ^/_matrix/federation/v1/exchange_third_party_invite/
+	reverse_proxy @federation_worker15 http://matrix.yourdomain.local:8454
+	@federation_worker16 path_regexp ^/_matrix/federation/v1/user/devices/
+	reverse_proxy @federation_worker16 http://matrix.yourdomain.local:8454
+	@federation_worker17 path_regexp ^/_matrix/key/v2/query
+	reverse_proxy @federation_worker17 http://matrix.yourdomain.local:8454
+	@federation_worker18 path_regexp ^/_matrix/federation/v1/hierarchy/
+	reverse_proxy @federation_worker18 http://matrix.yourdomain.local:8454
+
+	# Inbound federation transaction request
+	@federation_worker19 path_regexp ^/_matrix/federation/v1/send/
+	reverse_proxy @federation_worker19 http://matrix.yourdomain.local:8454
+
+	#Handles the media repository.
+	reverse_proxy /_matrix/media/* http://matrix.yourdomain.local:8085
+
+	#media-specific administration APIs
+	@media_worker1 path_regexp ^/_synapse/admin/v1/purge_media_cache$
+	reverse_proxy @media_worker1 http://matrix.yourdomain.local:8085
+	@media_worker2 path_regexp ^/_synapse/admin/v1/room/.*/media.*$
+	reverse_proxy @media_worker2 http://matrix.yourdomain.local:8085
+	@media_worker3 path_regexp ^/_synapse/admin/v1/user/.*/media.*$
+	reverse_proxy @media_worker3 http://matrix.yourdomain.local:8085
+	@media_worker4 path_regexp ^/_synapse/admin/v1/media/.*$
+	reverse_proxy @media_worker4 http://matrix.yourdomain.local:8085
+	@media_worker5 path_regexp ^/_synapse/admin/v1/quarantine_media/.*$
+	reverse_proxy @media_worker5 http://matrix.yourdomain.local:8085
+	@media_worker6 path_regexp ^/_synapse/admin/v1/users/.*/media$
+	reverse_proxy @media_worker6 http://matrix.yourdomain.local:8085
+
+	#Client Syncing
+	@client_sync_worker1 path_regexp ^/_matrix/client/(r0|v3)/sync$
+	reverse_proxy @client_sync_worker1 http://matrix.yourdomain.local:8456
+	@client_sync_worker2 path_regexp ^/_matrix/client/(api/v1|r0|v3)/events$
+	reverse_proxy @client_sync_worker2 http://matrix.yourdomain.local:8456
+	@client_sync_worker3 path_regexp ^/_matrix/client/(api/v1|r0|v3)/initialSync$
+	reverse_proxy @client_sync_worker3 http://matrix.yourdomain.local:8456
+	@client_sync_worker4 path_regexp ^/_matrix/client/(api/v1|r0|v3)/rooms/[^/]+/initialSync$
+	reverse_proxy @client_sync_worker4 http://matrix.yourdomain.local:8456
+
+	# Client API
+	@client_api_worker1 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/createRoom$
+	reverse_proxy @client_api_worker1 http://matrix.yourdomain.local:8457
+	@client_api_worker2 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/publicRooms$
+	reverse_proxy @client_api_worker2 http://matrix.yourdomain.local:8457
+	@client_api_worker3 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/joined_members$
+	reverse_proxy @client_api_worker3 http://matrix.yourdomain.local:8457
+	@client_api_worker4 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/context/.*$
+	reverse_proxy @client_api_worker4 http://matrix.yourdomain.local:8457
+	@client_api_worker5 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/members$
+	reverse_proxy @client_api_worker5 http://matrix.yourdomain.local:8457
+	@client_api_worker6 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/state$
+	reverse_proxy @client_api_worker6 http://matrix.yourdomain.local:8457
+	@client_api_worker7 path_regexp ^/_matrix/client/v1/rooms/.*/hierarchy$
+	reverse_proxy @client_api_worker7 http://matrix.yourdomain.local:8457
+	@client_api_worker8 path_regexp ^/_matrix/client/(v1|unstable)/rooms/.*/relations/
+	reverse_proxy @client_api_worker8 http://matrix.yourdomain.local:8457
+	@client_api_worker9 path_regexp ^/_matrix/client/v1/rooms/.*/threads$
+	reverse_proxy @client_api_worker9 http://matrix.yourdomain.local:8457
+	@client_api_worker10 path_regexp ^/_matrix/client/unstable/im.nheko.summary/rooms/.*/summary$
+	reverse_proxy @client_api_worker10 http://matrix.yourdomain.local:8457
+	@client_api_worker11 path_regexp ^/_matrix/client/(r0|v3|unstable)/account/3pid$
+	reverse_proxy @client_api_worker11 http://matrix.yourdomain.local:8457
+	@client_api_worker12 path_regexp ^/_matrix/client/(r0|v3|unstable)/account/whoami$
+	reverse_proxy @client_api_worker12 http://matrix.yourdomain.local:8457
+	@client_api_worker13 path_regexp ^/_matrix/client/(r0|v3|unstable)/devices$
+	reverse_proxy @client_api_worker13 http://matrix.yourdomain.local:8457
+	@client_api_worker14 path_regexp ^/_matrix/client/versions$
+	reverse_proxy @client_api_worker14 http://matrix.yourdomain.local:8457
+	@client_api_worker15 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/voip/turnServer$
+	reverse_proxy @client_api_worker15 http://matrix.yourdomain.local:8457
+	@client_api_worker16 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/event/
+	reverse_proxy @client_api_worker16 http://matrix.yourdomain.local:8457
+	@client_api_worker17 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/joined_rooms$
+	reverse_proxy @client_api_worker17 http://matrix.yourdomain.local:8457
+	@client_api_worker18 path_regexp ^/_matrix/client/v1/rooms/.*/timestamp_to_event$
+	reverse_proxy @client_api_worker18 http://matrix.yourdomain.local:8457
+	@client_api_worker19 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable/.*)/rooms/.*/aliases
+	reverse_proxy @client_api_worker19 http://matrix.yourdomain.local:8457
+	@client_api_worker20 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/search$
+	reverse_proxy @client_api_worker20 http://matrix.yourdomain.local:8457
+	@client_api_worker21 path_regexp ^/_matrix/client/(r0|v3|unstable)/user/.*/filter(/|$)
+	reverse_proxy @client_api_worker21 http://matrix.yourdomain.local:8457
+	@client_api_worker22 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/directory/room/.*$
+	reverse_proxy @client_api_worker22 http://matrix.yourdomain.local:8457
+	@client_api_worker23 path_regexp ^/_matrix/client/(r0|v3|unstable)/capabilities$
+	reverse_proxy @client_api_worker23 http://matrix.yourdomain.local:8457
+	@client_api_worker24 path_regexp ^/_matrix/client/(r0|v3|unstable)/notifications$
+	reverse_proxy @client_api_worker24 http://matrix.yourdomain.local:8457
+
+	# Encryption requests
+	@client_encryption_worker1 path_regexp ^/_matrix/client/(r0|v3|unstable)/keys/query$
+	reverse_proxy @client_encryption_worker1 http://matrix.yourdomain.local:8458
+	@client_encryption_worker2 path_regexp ^/_matrix/client/(r0|v3|unstable)/keys/changes$
+	reverse_proxy @client_encryption_worker2 http://matrix.yourdomain.local:8458
+	@client_encryption_worker3 path_regexp ^/_matrix/client/(r0|v3|unstable)/keys/claim$
+	reverse_proxy @client_encryption_worker3 http://matrix.yourdomain.local:8458
+	@client_encryption_worker4 path_regexp ^/_matrix/client/(r0|v3|unstable)/room_keys/
+	reverse_proxy @client_encryption_worker4 http://matrix.yourdomain.local:8458
+	@client_encryption_worker5 path_regexp ^/_matrix/client/(r0|v3|unstable)/keys/upload/
+	reverse_proxy @client_encryption_worker5 http://matrix.yourdomain.local:8458
+
+	# Registration/login requests
+	@client_login_worker1 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/login$
+	reverse_proxy @client_login_worker1 http://matrix.yourdomain.local:8459
+	@client_login_worker2 path_regexp ^/_matrix/client/(r0|v3|unstable)/register$
+	reverse_proxy @client_login_worker2 http://matrix.yourdomain.local:8459
+	@client_login_worker3 path_regexp ^/_matrix/client/(r0|v3|unstable)/register/available$
+	reverse_proxy @client_login_worker3 http://matrix.yourdomain.local:8459
+	@client_login_worker4 path_regexp ^/_matrix/client/v1/register/m.login.registration_token/validity$
+	reverse_proxy @client_login_worker4 http://matrix.yourdomain.local:8459
+	@client_login_worker5 path_regexp ^/_matrix/client/(r0|v3|unstable)/password_policy$
+	reverse_proxy @client_login_worker5 http://matrix.yourdomain.local:8459
+
+	# Event sending requests
+	@client_sender_worker1 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/redact
+	reverse_proxy @client_sender_worker1 http://matrix.yourdomain.local:8460
+	@client_sender_worker2 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/send
+	reverse_proxy @client_sender_worker2 http://matrix.yourdomain.local:8460
+	@client_sender_worker3 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/state/
+	reverse_proxy @client_sender_worker3 http://matrix.yourdomain.local:8460
+	@client_sender_worker4 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/(join|invite|leave|ban|unban|kick)$
+	reverse_proxy @client_sender_worker4 http://matrix.yourdomain.local:8460
+	@client_sender_worker5 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/messages$
+	reverse_proxy @client_sender_worker5 http://matrix.yourdomain.local:8460
+	@client_sender_worker6 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/join/
+	reverse_proxy @client_sender_worker6 http://matrix.yourdomain.local:8460
+	@client_sender_worker7 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/knock/
+	reverse_proxy @client_sender_worker7 http://matrix.yourdomain.local:8460
+	@client_sender_worker8 path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/profile/
+	reverse_proxy @client_sender_worker8 http://matrix.yourdomain.local:8460
+	#Client push rules
+	@client_pushrules_worker path_regexp ^/_matrix/client/(api/v1|r0|v3|unstable)/pushrules/
+	reverse_proxy @client_sender_worker8 http://matrix.yourdomain.local:8461
+
+	#Catch All
+	reverse_proxy /_matrix/* http://matrix.yourdomain.local:8448
+
+	reverse_proxy /_synapse/client/* http://matrix.yourdomain.local:8448
+}
