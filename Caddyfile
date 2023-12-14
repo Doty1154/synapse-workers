@@ -64,12 +64,14 @@ matrix.yourdomain.local {
 	reverse_proxy @federation_worker16 http://matrix.yourdomain.local:8454
 	@federation_worker17 path_regexp ^/_matrix/key/v2/query
 	reverse_proxy @federation_worker17 http://matrix.yourdomain.local:8454
-	@federation_worker18 path_regexp ^/_matrix/federation/v1/hierarchy/
+	@federation_worker18 path_regexp ^/_matrix/key/v2/server
 	reverse_proxy @federation_worker18 http://matrix.yourdomain.local:8454
+	@federation_worker19 path_regexp ^/_matrix/federation/v1/hierarchy/
+	reverse_proxy @federation_worker19 http://matrix.yourdomain.local:8454
 
 	# Inbound federation transaction request
-	@federation_worker19 path_regexp ^/_matrix/federation/v1/send/
-	reverse_proxy @federation_worker19 http://matrix.yourdomain.local:8454
+	@federation_worker20 path_regexp ^/_matrix/federation/v1/send/
+	reverse_proxy @federation_worker20 http://matrix.yourdomain.local:8454
 
 	#Handles the media repository.
 	reverse_proxy /_matrix/media/* http://matrix.yourdomain.local:8085
