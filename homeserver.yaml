@@ -39,9 +39,6 @@ instance_map:
     federation_sender1:
         host: '127.0.0.1'
         port: 8035
-    generic_worker1:
-        host: '127.0.0.1'
-        port: 8036
     background_worker:
         host: '127.0.0.1'
         port: 8037
